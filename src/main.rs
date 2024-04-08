@@ -2,17 +2,14 @@
 use aws_sdk_costexplorer::types::{Dimension as Cost_Dimension, DimensionValues, Expression, TagValues};
 use aws_sdk_costexplorer::{self, types::DateInterval};
 use aws_sdk_costexplorer::operation::get_cost_and_usage::GetCostAndUsageOutput;
-use aws_sdk_cloudwatch;
-use aws_sdk_cloudwatch::operation::get_metric_data::GetMetricDataOutput;
-use aws_sdk_cloudwatch::types::{Dimension, Metric, MetricDataQuery, MetricStat};
 use aws_sdk_s3::config::Region;
-use aws_smithy_types::{date_time::Format, DateTime};
 use chrono::prelude::*;
 use serde_json::Result;
 use std::env;
 
 use util::calculator::build_date_range;
 use util::csv_writer::write_to_csv;
+use util::metric_client::MetricClient;
 
 pub mod util;
 
@@ -24,8 +21,6 @@ async fn main() -> Result<()> {
     let args: Vec<String> = env::args().collect();
     let lambda_name = &args[1];
     let lambda_tag_name = &args[2];
-    // let lambda_name = "tf-kiwi-cne-proda-shop-service";
-    // let lambda_tag_name = "tf-kiwi-cne-proda-shop";
 
     let aws_profile = match env::var("AWS_PROFILE") {
         Ok(v) => v,
@@ -44,15 +39,16 @@ async fn main() -> Result<()> {
 
     let date_ranges = build_date_range("2023-04", "2024-03").unwrap();
 
-    let client = aws_sdk_cloudwatch::Client::new(&shared_config);
+    let metric_client = MetricClient::new(shared_config.clone());
+
     let ce_client = aws_sdk_costexplorer::Client::new(&shared_config);
 
     let mut com_results: Vec<(&str, f64, f64, f64, f64)> = Vec::default(); 
 
     for date_range in &date_ranges {
 
-        let inv_resp_async = query_for_invocations_by_date_range(&client, date_range.0.as_str(), date_range.1.as_str(), lambda_name).await;
-        let duration_resp_async = query_for_duration_by_date_range(&client, date_range.0.as_str(), date_range.1.as_str(), lambda_name).await;
+        let inv_resp_async = metric_client.query_for_invocations_by_date_range(date_range.0.as_str(), date_range.1.as_str(), lambda_name).await;
+        let duration_resp_async = metric_client.query_for_duration_by_date_range(date_range.0.as_str(), date_range.1.as_str(), lambda_name).await;
         let cost_resp_async = query_for_cost_by_date_range(&ce_client, date_range.0.as_str(), date_range.1.as_str(), lambda_tag_name).await;
         let mut inv_result = f64::default(); 
         let mut duration_result = f64::default(); 
@@ -79,117 +75,7 @@ async fn main() -> Result<()> {
 
     write_to_csv(lambda_name, &aws_profile, &aws_region, com_results);
 
-    // // save to CSV
-    // let mut wtr = csv::Writer::from_path(format!("./{}-{}-{}-output.csv", &lambda_name, &aws_profile, &aws_region)).unwrap();
-
-    // // header row
-    // match wtr.write_record(&["function-name", "timestamp",  "monthly-cost", "invocations", "average-duration", "cost-per-100m-requests"]) {
-    //     Ok(_v) => (),
-    //     Err(e) => println!("{:?}", e)
-    // }
-    // match wtr.flush() {
-    //     Ok(_v) => (),
-    //     Err(_e) => ()
-    // };
-
-    // for com_result in com_results{
-    //     println!("{:?}", com_result);
-    //     match wtr.write_record(&[lambda_name, 
-    //         com_result.0, com_result.1.to_string().as_str(), 
-    //         com_result.2.to_string().as_str(), 
-    //         com_result.3.to_string().as_str(), 
-    //         com_result.4.to_string().as_str()]) {
-    //         Ok(_v) => (),
-    //         Err(e) => println!("{:?}", e)
-    //     }
-    //     match wtr.flush() {
-    //         Ok(_v) => (),
-    //         Err(_e) => ()
-    //     };
-    // }
-
     Ok(())
-}
-
-async fn query_for_invocations_by_date_range(client: &aws_sdk_cloudwatch::Client, start_time: &str, end_time: &str, lambda_name: &str) -> GetMetricDataOutput {
-
-    println!("query_for_invocations_by_date_range::start - {} {}", start_time, end_time);
-
-    let dimension_builder = Dimension::builder();
-    let dimension: Dimension = dimension_builder
-        .set_value(Some(String::from(lambda_name)))
-        .set_name(Some(String::from("FunctionName"))).build();
-
-    let inv_metric_builder = Metric::builder();
-    let inv_metric = inv_metric_builder
-        .set_metric_name(Some(String::from("Invocations"))) 
-        .set_namespace(Some(String::from("AWS/Lambda")))
-        .set_dimensions(Some(vec![dimension.clone()]))
-        .build();
-
-
-    // TODO - calculate correct period .....
-    let inv_metric_stat_builder = MetricStat::builder();
-    let inv_metric_stat = inv_metric_stat_builder
-        .set_metric(Some(inv_metric))
-        .set_period(Some(2678400))
-        .set_stat(Some(String::from("Sum")))
-        .build();
-
-    let inv_metric_data_query_builder = MetricDataQuery::builder();
-    let inv_query = inv_metric_data_query_builder
-        .set_id(Some(String::from("m1")))
-        .set_metric_stat(Some(inv_metric_stat))
-        .set_return_data(Some(true))
-        .build();
-
-    println!("query_for_invocations_by_date_range::end - {} {}", start_time, end_time);
-
-    client.get_metric_data()
-        .set_start_time(Some(DateTime::from_str(start_time, Format::DateTime).unwrap()))
-        .set_end_time(Some(DateTime::from_str(end_time, Format::DateTime).unwrap()))
-        .set_metric_data_queries(Some(vec![inv_query]))
-        .send().await.unwrap()
-}
-
-async fn query_for_duration_by_date_range(client: &aws_sdk_cloudwatch::Client, start_time: &str, end_time: &str, lambda_name: &str) -> GetMetricDataOutput {
-
-    println!("query_for_duration_by_date_range::start - {} {}", start_time, end_time);
-
-    let dimension_builder = Dimension::builder();
-    let dimension: Dimension = dimension_builder
-        .set_value(Some(String::from(lambda_name)))
-        .set_name(Some(String::from("FunctionName"))).build();
-
-    let duration_metric_builder = Metric::builder();
-    let duration_metric = duration_metric_builder
-        .set_metric_name(Some(String::from("Duration"))) 
-        .set_namespace(Some(String::from("AWS/Lambda")))
-        .set_dimensions(Some(vec![dimension]))
-        .build();
-
-    // TODO - calculate correct period .....
-    let duration_metric_stat_builder = MetricStat::builder();
-    let duration_metric_stat = duration_metric_stat_builder
-        .set_metric(Some(duration_metric))
-        .set_period(Some(2678400))
-        .set_stat(Some(String::from("Average")))
-        .build();
-
-    let duration_metric_data_query_builder = MetricDataQuery::builder();
-    let duration_query = duration_metric_data_query_builder
-        .set_id(Some(String::from("m2")))
-        .set_metric_stat(Some(duration_metric_stat))
-        .set_return_data(Some(true))
-        .build();
-
-    println!("query_for_duration_by_date_range::end - {} {}", start_time, end_time);
-
-    client.get_metric_data()
-        .set_start_time(Some(DateTime::from_str(start_time, Format::DateTime).unwrap()))
-        .set_end_time(Some(DateTime::from_str(end_time, Format::DateTime).unwrap()))
-        .set_metric_data_queries(Some(vec![duration_query]))
-        .send().await.unwrap()
 }
 
 async fn query_for_cost_by_date_range(client: &aws_sdk_costexplorer::Client, start_time: &str, end_time: &str, lambda_tag_name: &str) -> GetCostAndUsageOutput {
