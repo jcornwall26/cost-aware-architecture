@@ -16,19 +16,19 @@ impl MetricClient {
 
     pub async fn query_for_invocations_by_date_range(&self, start_time: &str, end_time: &str, lambda_name: &str) -> GetMetricDataOutput{
         println!("query_for_invocations_by_date_range::start - {} {}", start_time, end_time);
-        let output = self.generic_query(start_time, end_time, lambda_name, "Invocations").await;
+        let output = self.generic_query(start_time, end_time, lambda_name, "Invocations", "Sum").await;
         println!("query_for_invocations_by_date_range::end - {} {}", start_time, end_time);
         output
     }
 
     pub async fn query_for_duration_by_date_range(&self, start_time: &str, end_time: &str, lambda_name: &str) -> GetMetricDataOutput{
         println!("query_for_duration_by_date_range::start - {} {}", start_time, end_time);
-        let output = self.generic_query(start_time, end_time, lambda_name, "Duration").await;
+        let output = self.generic_query(start_time, end_time, lambda_name, "Duration", "Average").await;
         println!("query_for_duration_by_date_range::end - {} {}", start_time, end_time);
         output
     }
 
-    async fn generic_query(&self, start_time: &str, end_time: &str, lambda_name: &str, metric_name: &str) -> GetMetricDataOutput
+    async fn generic_query(&self, start_time: &str, end_time: &str, lambda_name: &str, metric_name: &str, metric_stat: &str) -> GetMetricDataOutput
     {
         let dimension_builder = Dimension::builder();
         let dimension: Dimension = dimension_builder
@@ -47,7 +47,7 @@ impl MetricClient {
         let metric_stat = metric_stat_builder
             .set_metric(Some(metric))
             .set_period(Some(2678400))
-            .set_stat(Some(String::from("Sum")))
+            .set_stat(Some(String::from(metric_stat)))
             .build();
     
         let metric_data_query_builder = MetricDataQuery::builder();

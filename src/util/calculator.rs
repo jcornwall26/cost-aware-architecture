@@ -2,7 +2,7 @@ use chrono::{prelude::*, Months};
 
 pub fn build_date_range(start_date: &str, end_date: &str) -> Option<Vec<(String, String)>>
 {
-    //append day to form a full date so NaiveDate can parse
+    // append day to form a full date so NaiveDate can parse
     let nd_start_date = NaiveDate::parse_from_str(format!("{}-01", start_date).as_str(), "%Y-%m-%d").unwrap();
     let nd_end_date = NaiveDate::parse_from_str(format!("{}-01", end_date).as_str(), "%Y-%m-%d").unwrap();
 
@@ -20,12 +20,9 @@ pub fn build_date_range(start_date: &str, end_date: &str) -> Option<Vec<(String,
         nd_current_date = nd_current_date.checked_add_months(Months::new(1)).unwrap();
     }
 
-    for date in &dates {
-        println!("{:?}", date)
-    }
+    dbg!(&dates);
 
     Some(dates)
-
 }
 
 fn last_day_of_month(year: i32, month: u32) -> Result<NaiveDate, String> {
