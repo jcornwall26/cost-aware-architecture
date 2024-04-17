@@ -15,16 +15,12 @@ impl MetricClient {
     }
 
     pub async fn query_for_invocations_by_date_range(&self, start_time: &str, end_time: &str, lambda_name: &str) -> GetMetricDataOutput{
-        println!("query_for_invocations_by_date_range::start - {} {}", start_time, end_time);
         let output = self.generic_query(start_time, end_time, lambda_name, "Invocations", "Sum").await;
-        println!("query_for_invocations_by_date_range::end - {} {}", start_time, end_time);
         output
     }
 
     pub async fn query_for_duration_by_date_range(&self, start_time: &str, end_time: &str, lambda_name: &str) -> GetMetricDataOutput{
-        println!("query_for_duration_by_date_range::start - {} {}", start_time, end_time);
         let output = self.generic_query(start_time, end_time, lambda_name, "Duration", "Average").await;
-        println!("query_for_duration_by_date_range::end - {} {}", start_time, end_time);
         output
     }
 

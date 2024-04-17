@@ -36,8 +36,8 @@ impl S3Client {
 
 fn build_object_key_from_csv_path(csv_local_path: &str) -> String {
     // cut off suffix & leading ./
-    let len = csv_local_path.find("-output.csv").unwrap();
-    let obj_suffix = csv_local_path.get(2..len).unwrap();
+    let len = csv_local_path.find("-output.csv").unwrap_or_default();
+    let obj_suffix = csv_local_path.get(2..len).unwrap_or_default();
     format!("lambda-costs/{}.csv", obj_suffix)
 }
 

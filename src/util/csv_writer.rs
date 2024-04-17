@@ -14,7 +14,6 @@ pub fn write_to_csv(lambda_name :&str, csv_path :&str, com_results: Vec<(&str, f
     };
 
     for com_result in com_results{
-        println!("{:?}", com_result);
         match wtr.write_record([lambda_name, 
             com_result.0, com_result.1.to_string().as_str(), 
             com_result.2.to_string().as_str(), 

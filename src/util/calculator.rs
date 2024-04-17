@@ -19,9 +19,7 @@ pub fn build_date_range(start_date: &str, end_date: &str) -> Option<Vec<(String,
         dates.push((format!("{}T00:00:00Z", start_range_str), format!("{}T00:00:00Z", end_range_str)));
         nd_current_date = nd_current_date.checked_add_months(Months::new(1)).unwrap();
     }
-
-    dbg!(&dates);
-
+    
     Some(dates)
 }
 
