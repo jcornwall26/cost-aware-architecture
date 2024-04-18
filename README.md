@@ -1,5 +1,5 @@
 # Overview
-Inspired by the laws outlined in the [Frugal Architecture](https://thefrugalarchitect.com/laws/make-cost-a-non-functional-requirement.html), this project attempts to support these laws, specifically I, II and IV - treating cost as a non-functional requirement and improving cost observability. 
+Inspired by the laws outlined in [Frugal Architecture](https://thefrugalarchitect.com/laws/make-cost-a-non-functional-requirement.html) by Dr. Vogels, this project attempts to support these laws, specifically I, II and IV - treating cost as a non-functional requirement and improving cost observability. 
 
 ## Context
 The cost of infrastructure in isolation has no context, especially over time. Does it make sense that my cloud costs have increased, decreased, or even plateaued relative to previous months? The first phase of this program tries to provide some context for lambda based services. 
