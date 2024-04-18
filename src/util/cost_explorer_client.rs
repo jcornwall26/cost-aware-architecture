@@ -32,10 +32,10 @@ impl CostExplorerClient {
             .set_values(Some(vec![String::from("us-west-2")]))
             .build();
     
-        let service_dimension = DimensionValues::builder()
-            .set_key(Some(Cost_Dimension::Service))
-            .set_values(Some(vec![String::from("AWS Lambda")]))
-            .build();
+        // let service_dimension = DimensionValues::builder()
+        //     .set_key(Some(Cost_Dimension::Service))
+        //     .set_values(Some(vec![String::from("AWS Lambda")]))
+        //     .build();
     
         let tag_value : TagValues = TagValues::builder()
             .set_key(Some(String::from("Name")))
@@ -46,16 +46,16 @@ impl CostExplorerClient {
             .set_dimensions(Some(region_dimension))
             .build();
     
-        let service_exp = Expression::builder()
-            .set_dimensions(Some(service_dimension))
-            .build();
+        // let service_exp = Expression::builder()
+        //     .set_dimensions(Some(service_dimension))
+        //     .build();
     
         let tag_exp = Expression::builder()
             .set_tags(Some(tag_value))
             .build();
     
         let exp = Expression::builder()
-            .set_and(Some(vec![region_exp,service_exp, tag_exp]))
+            .set_and(Some(vec![region_exp, tag_exp]))
             .build();
     
         self.aws_client.get_cost_and_usage()
