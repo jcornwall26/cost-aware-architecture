@@ -4,7 +4,7 @@ Inspired by the laws outlined in [Frugal Architecture](https://thefrugalarchitec
 ## Context
 The cost of infrastructure in isolation has no context, especially over time. Does it make sense that my cloud costs have increased, decreased, or even plateaued relative to previous months? The first phase of this program tries to provide some context for lambda based services. 
 
-For a given service, the program will collect:
+For a given service, the `cost_aware_arch` executable will collect:
 - total monthly costs
 - total monthly invocations
 - the average latency duration
