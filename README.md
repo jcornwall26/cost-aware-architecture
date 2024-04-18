@@ -59,5 +59,5 @@ Next step, uploading the report.
 If execution is successful, the local `.csv` file is uploaded to S3.
 
 ## Visualizing via QuickSight Dashboards
-Current state, this project doesn't build this infra, but the pattern is building Athena & Glue resources to support Quick Sight dashboards. Example looks like:
+Current state, this project doesn't build this infra, but a pattern to visualize is building Athena & Glue resources to support Quick Sight dashboards. The outcome can look like:
 ![qs example](./supporting_docs/quick-sight-example.png)
