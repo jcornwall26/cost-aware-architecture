@@ -60,3 +60,4 @@ impl MetricClient {
             .send().await.unwrap()
     }
 }
+
