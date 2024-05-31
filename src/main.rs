@@ -8,7 +8,7 @@ use util::calculator::build_date_range;
 use util::cost_explorer_client::CostExplorerClient;
 use util::csv_writer::write_to_csv;
 use util::metric_client::MetricClient;
-use util::report_config::ReportConfig;
+use util::report_config::ReportConfigManager;
 use util::s3_client::S3Client;
 use util::stop_watch::StopWatch;
 
@@ -22,7 +22,10 @@ enum Command {
     CreateReports,
     /// Uploads csv report to S3
     UploadReport,
+    /// Uploads csv report to S3, for all defined in /config/query.json
+    UploadReports,
 }
+
 #[derive(Deserialize, Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
@@ -61,53 +64,57 @@ struct Args {
 
 #[::tokio::main]
 async fn main() -> Result<()> {
+    // start stopwatch
     let sw = Rc::new(StopWatch::new());
+
+    // load up arguments and report config
     let args = Args::parse();
     let command = args.command;
-    sw.log_execution_duration("main::command_args");
+    let report_config_manager = ReportConfigManager::new();
 
     match command {
         Command::CreateReport => {
-            let lambda_name = args.lambda_name.unwrap();
+            let lambda_name = match args.lambda_name {
+                Some(l) => l,
+                None => panic!("lambda_name arg needed for CreateReport"),
+            };
             let csv_path = build_csv_path(
                 &lambda_name,
                 args.start_date.as_str(),
                 args.end_date.as_str(),
             );
+
+            let config = report_config_manager.get_config(&lambda_name).unwrap();
             create_report(
                 Rc::clone(&sw),
                 args.aws_profile.unwrap().as_str(),
-                args.aws_region.unwrap().as_str(),
-                args.report_query_role_arn.unwrap().as_str(),
+                &config.region,
+                &config.report_query_role_arn,
                 csv_path.as_str(),
-                lambda_name.as_str(),
-                args.cost_allocation_tag.unwrap().as_str(),
+                &config.lambda_name,
+                &config.cost_allocation_tag,
                 args.start_date.as_str(),
                 args.end_date.as_str(),
             )
             .await;
         }
         Command::CreateReports => {
-            let config_str = include_str!("config/report.json");
-            let query: Vec<ReportConfig> = serde_json::from_str(config_str).unwrap();
             let profile = args.aws_profile.unwrap();
-
-            for q in query.into_iter() {
-                let lambda_name = q.lambda_name;
+            for report in report_config_manager.report_config.into_iter() {
+                let lambda_name = report.lambda_name;
                 let csv_path = build_csv_path(
                     &lambda_name,
                     args.start_date.as_str(),
                     args.end_date.as_str(),
                 );
-
                 create_report(
                     Rc::clone(&sw),
                     profile.as_str(),
-                    q.region.as_str(),
-                    q.report_query_role_arn.as_str(),
+                    report.region.as_str(),
+                    report.report_query_role_arn.as_str(),
                     csv_path.as_str(),
                     lambda_name.as_str(),
-                    q.cost_allocation_tag.as_str(),
+                    report.cost_allocation_tag.as_str(),
                     args.start_date.as_str(),
                     args.end_date.as_str(),
                 )
@@ -115,8 +122,12 @@ async fn main() -> Result<()> {
             }
         }
         Command::UploadReport => {
+            let lambda_name = match args.lambda_name {
+                Some(l) => l,
+                None => panic!("lambda_name arg needed for UploadReport"),
+            };
             let csv_path = build_csv_path(
-                args.lambda_name.unwrap().as_str(),
+                &lambda_name,
                 args.start_date.as_str(),
                 args.end_date.as_str(),
             );
@@ -127,6 +138,20 @@ async fn main() -> Result<()> {
                 &csv_path,
             )
             .await;
+        }
+        Command::UploadReports => {
+            let profile = args.aws_profile.unwrap();
+            let region = args.aws_region.unwrap();
+
+            for report in report_config_manager.report_config.into_iter() {
+                let csv_path = build_csv_path(
+                    &report.lambda_name,
+                    args.start_date.as_str(),
+                    args.end_date.as_str(),
+                );
+
+                upload_report(Rc::clone(&sw), &profile, &region, &csv_path).await;
+            }
         }
     }
 
