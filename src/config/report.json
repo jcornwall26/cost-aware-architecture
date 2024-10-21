@@ -1,42 +1,12 @@
 [
     {
         "region": "us-west-2",
-        "lambda_name": "tf-ecom-web-app-prodb-shop-service",
+        "lambda_name": "test-lambda",
         "cost_allocation_tags": [ 
             { 
-                "key": "lll:business:application-name", 
-                "values": ["web-app", "ecom-web-app"] 
+                "key": "application", 
+                "values": ["web-app"] 
             }],
-        "report_query_role_arn": "arn:aws:iam::048430863637:role/lll-cost-aware-arch-reporter"
-    },
-    {
-        "region": "us-west-2",
-        "lambda_name": "tf-kiwi-cne-proda-shop-service",
-        "cost_allocation_tags": [ 
-            { 
-                "key": "lll:business:application-name", 
-                "values": ["Kiwi-Server-CNE", "digital-kiwi"] 
-            }],
-        "report_query_role_arn": "arn:aws:iam::048430863637:role/lll-cost-aware-arch-reporter"
-    },
-    {
-        "region": "us-west-2",
-        "lambda_name": "tf-ecom-site-proda-shop-service",
-        "cost_allocation_tags": [ 
-            { 
-                "key": "lll:business:application-name", 
-                "values": ["ecom-checkout-client"] 
-            }],
-        "report_query_role_arn": "arn:aws:iam::048430863637:role/lll-cost-aware-arch-reporter"
-    },
-    {
-        "region": "us-west-2",
-        "lambda_name": "tf-phoenix-proda-shop-service",
-        "cost_allocation_tags": [ 
-            { 
-                "key": "lll:business:application-name", 
-                "values": ["ecom-gtwy-phoenix"] 
-            }],
-        "report_query_role_arn": "arn:aws:iam::048430863637:role/lll-cost-aware-arch-reporter"
+        "report_query_role_arn": "arn:aws:iam::111111:role/cost-aware-arch-reporter"
     }
 ]
