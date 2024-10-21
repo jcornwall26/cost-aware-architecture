@@ -1,7 +1,7 @@
 [
     {
         "region": "us-west-2",
-        "account_name": "content",
-        "report_query_role_arn": "arn:aws:iam::048430863637:role/lll-cost-aware-arch-reporter"
+        "account_name": "account",
+        "report_query_role_arn": "arn:aws:iam::111111:role/cost-aware-arch-reporter"
     }
 ]
