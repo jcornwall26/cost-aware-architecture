@@ -28,3 +28,32 @@ pub fn write_to_csv(lambda_name :&str, csv_path :&str, com_results: Vec<(&str, f
         };
     };
 }
+
+
+pub fn write_to_csv_account(csv_path :&str, com_results: Vec<(&str, f64, f64)>) {
+
+    let mut wtr = csv::Writer::from_path(csv_path).unwrap();
+
+    // write header
+    match wtr.write_record(["timestamp", "monthly-cost",  "per-increase"]) {
+        Ok(_v) => (),
+        Err(e) => println!("{:?}", e)
+    }
+    match wtr.flush() {
+        Ok(_v) => (),
+        Err(e) => println!("{:?}", e)
+    };
+
+    for com_result in com_results{
+        match wtr.write_record([ 
+            com_result.0, com_result.1.to_string().as_str(), 
+            com_result.2.to_string().as_str()]) {
+            Ok(_v) => (),
+            Err(e) => println!("{:?}", e)
+        }
+        match wtr.flush() {
+            Ok(_v) => (),
+            Err(e) => println!("{:?}", e)
+        };
+    };
+}

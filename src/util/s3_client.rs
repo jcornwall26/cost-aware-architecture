@@ -32,6 +32,27 @@ impl S3Client {
                 Err(e) => println!("Put object failed: {:?}", e)
             }
     }
+
+    pub async fn upload_csv_account(&self, csv_local_path: &str) {
+
+        let stream = ByteStream::read_from()
+            .path(csv_local_path)
+            .build()
+            .await
+            .unwrap();
+
+        let obj_key = build_object_key_from_csv_path_account(csv_local_path);
+
+        match self.aws_client.put_object()
+            .key(obj_key)
+            .bucket("athena-jsc-poc")
+            .body(stream)
+            .send().await
+            {
+                Ok(_) => (),
+                Err(e) => println!("Put object failed: {:?}", e)
+            }
+    }
 }
 
 fn build_object_key_from_csv_path(csv_local_path: &str) -> String {
@@ -39,6 +60,13 @@ fn build_object_key_from_csv_path(csv_local_path: &str) -> String {
     let len = csv_local_path.find("-output.csv").unwrap_or_default();
     let obj_suffix = csv_local_path.get(2..len).unwrap_or_default();
     format!("lambda-costs/{}.csv", obj_suffix)
+}
+
+fn build_object_key_from_csv_path_account(csv_local_path: &str) -> String {
+    // cut off suffix & leading ./
+    let len = csv_local_path.find("-output.csv").unwrap_or_default();
+    let obj_suffix = csv_local_path.get(2..len).unwrap_or_default();
+    format!("account-costs/{}.csv", obj_suffix)
 }
 
 #[cfg(test)]
