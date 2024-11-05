@@ -21,7 +21,7 @@ jobs:
       uses: actions/upload-artifact@v4.4.3
       with:
         name: docker-artifact
-        path: path/to/artifacts
+        path: /home/runner/work/cost-aware-architecture/cost-aware-architecture/target
         retention-days: 1
 
   tests:
@@ -32,6 +32,6 @@ jobs:
       uses: actions/download-artifact@v4.1.8
       with:
         name: docker-artifact
-        path: path/to/artifacts
+        path: /home/runner/work/cost-aware-architecture/cost-aware-architecture/target
     - name: Run tests
       run: cargo test --verbose
