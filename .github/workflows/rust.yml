@@ -18,7 +18,7 @@ jobs:
     - name: Build
       run: cargo build --verbose
     - name: Temporarily save Docker image
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v4.1.8
       with:
         name: docker-artifact
         path: path/to/artifacts
@@ -29,7 +29,7 @@ jobs:
     needs: build
     steps:
     - name: Retrieve saved Docker image
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v4.1.8
       with:
         name: docker-artifact
         path: path/to/artifacts
