@@ -1,0 +1,37 @@
+name: Rust
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build
+      run: cargo build --verbose
+    - name: Temporarily save Docker image
+      uses: actions/upload-artifact@v4.4.3
+      with:
+        name: docker-artifact 
+        path: /home/runner/work/cost-aware-architecture
+        retention-days: 1
+
+  tests:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+    - name: Retrieve saved Docker image
+      uses: actions/download-artifact@v4.1.8
+      with:
+        name: docker-artifact
+        path: /home/runner/work/cost-aware-architecture
+    - name: Run tests
+      run: cargo test --verbose
