@@ -5,3 +5,4 @@ pub mod metric_client;
 pub mod report_config;
 pub mod s3_client;
 pub mod stop_watch;
+pub mod opensearch_client;

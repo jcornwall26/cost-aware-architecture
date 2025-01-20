@@ -3,10 +3,9 @@ use futures::join;
 use std::rc::Rc;
 use crate::util::calculator::build_date_range;
 use crate::util::cost_explorer_client::CostExplorerClient;
-use crate::util::csv_writer::{write_to_csv, write_to_csv_account};
 use crate::util::metric_client::MetricClient;
 use crate::util::report_config::TagKeyValues;
-use crate::util::s3_client::S3Client;
+use crate::util::opensearch_client::OpenSearchClient;
 use crate::util::stop_watch::StopWatch;
 
 pub async fn create_report(
@@ -15,7 +14,6 @@ pub async fn create_report(
     aws_assume_role: bool,
     start_date: &str,
     end_date: &str,
-    csv_path: &str,
     lambda_name: &str,
     aws_region: &str,
     report_query_role_arn: &str,
@@ -95,93 +93,10 @@ pub async fn create_report(
         ));
     }
 
-    write_to_csv(&lambda_name, csv_path, combined_results);
-    sw.log_execution_duration("create_report::write_to_csv");
+    let os_client = OpenSearchClient::new();
+    os_client.write_to_opensearch(&lambda_name, combined_results).await;
+    sw.log_execution_duration("create_report::write_to_opensearch");
     sw.log_execution_duration("create_report");
-}
-
-pub async fn create_report_account(
-    sw: Rc<StopWatch>,
-    aws_profile: &str,
-    aws_assume_role: bool,
-    start_date: &str,
-    end_date: &str,
-    csv_path: &str,
-    aws_region: &str,
-    report_query_role_arn: &str,
-) {
-    let profile_config = load_profile_config(aws_region, aws_profile, aws_assume_role, report_query_role_arn).await;
-
-    sw.log_execution_duration("create_report::load_profile_config");
-
-    let date_ranges = build_date_range(start_date, end_date).unwrap();
-    let ce_client = CostExplorerClient::new(profile_config);
-
-    let mut combined_results: Vec<(&str, f64, f64)> = Vec::default();
-
-    let mut previous_month = f64::default();
-
-    for date_range in &date_ranges {
-        //collect futures
-        let cost_resp_async = ce_client.query_for_account_cost_by_date_range(
-            date_range.0.as_str(),
-            date_range.1.as_str());
-
-        // set default
-        let mut cost_result = f64::default();
-
-        // go get that data, and join results....
-        let join_result = join!(cost_resp_async);
-        sw.log_execution_duration(
-            format!("create_report::data_collection::{}", date_range.0).as_str(),
-        );
-
-        for cost_response in join_result.0.results_by_time.unwrap() {
-            let total_cost: &aws_sdk_costexplorer::types::MetricValue =
-                &cost_response.total.unwrap()["AmortizedCost"];
-            cost_result = total_cost.amount.as_ref().unwrap().parse::<f64>().unwrap();
-        }
-
-        let cost_perentage_change = match previous_month == 0f64 {
-            true => 0f64,
-            false => ((cost_result - previous_month) / previous_month) * 100f64
-        };
-
-        combined_results.push((
-            date_range.0.as_str(),
-            cost_result,
-            cost_perentage_change,
-        ));
-        previous_month = cost_result;
-    }
-
-    write_to_csv_account(csv_path, combined_results);
-    sw.log_execution_duration("create_report::write_to_csv");
-    sw.log_execution_duration("create_report");
-}
-
-pub async fn upload_report(sw: Rc<StopWatch>, aws_profile: &str, aws_region: &str, csv_path: &str) {
-    let shared_config = aws_config::from_env()
-        .region(Region::new(aws_region.to_string()))
-        .profile_name(aws_profile)
-        .load()
-        .await;
-
-    let s3_client = S3Client::new(shared_config);
-    s3_client.upload_csv(csv_path).await;
-    sw.log_execution_duration("upload_report");
-}
-
-pub async fn upload_report_account(sw: Rc<StopWatch>, aws_profile: &str, aws_region: &str, csv_path: &str) {
-    let shared_config = aws_config::from_env()
-        .region(Region::new(aws_region.to_string()))
-        .profile_name(aws_profile)
-        .load()
-        .await;
-
-    let s3_client = S3Client::new(shared_config);
-    s3_client.upload_csv_account(csv_path).await;
-    sw.log_execution_duration("upload_report");
 }
 
 async fn load_profile_config(aws_region: &str, aws_profile: &str, aws_assume_role: bool, report_query_role_arn: &str) -> aws_config::SdkConfig {

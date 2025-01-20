@@ -15,9 +15,6 @@ pub struct CostExplorerClient {
     aws_client: aws_sdk_costexplorer::Client,
 }
 
-// #[derive(Debug)]
-// struct Tag(String, String);
-
 #[derive(Serialize, Deserialize)]
 struct CostExplorerConfig {
     region_dimension: String,
@@ -117,53 +114,3 @@ impl CostExplorerClient {
     }
 }
 
-// fn parse_tag_key_and_value_list(tag_strs: &Vec<String>) -> Vec<Tag> {
-
-//     let mut tags: Vec<Tag> = Vec::new();
-//     for tag_str in tag_strs {
-
-//         let index = match tag_str.find("=") {
-//             Some(v) => v,
-//             None => panic!(
-//                 "Could not parse tag string, expected format Name=Value, provided tag argument: {}",
-//                 tag_str
-//             ),
-//         };
-//         let name = tag_str.get(..index).unwrap_or_default();
-//         let value = tag_str.get(index + 1..).unwrap_or_default();
-//         tags.push(Tag(
-//             String::from_str(name).unwrap(),
-//             String::from_str(value).unwrap(),
-//         ));
-//     }
-//     tags
-// }
-
-#[cfg(test)]
-mod tests {
-
-    // use super::*;
-
-    // #[test]
-    // fn parse_tag_key_and_value_tests() {
-    //     let tags = vec![String::from("Name=Value")];
-    //     let parsed_tag = parse_tag_key_and_value_list(&tags);
-    //     assert_eq!(parsed_tag[0].0, "Name");
-    //     assert_eq!(parsed_tag[0].1, "Value");
-    // }
-
-    // #[test]
-    // fn parse_tag_key_and_value_with_space_tests() {
-    //     let tag = vec![String::from("Name=Search and Browse - Kiwi GraphQL Server")];
-    //     let parsed_tag = parse_tag_key_and_value_list(&tag);
-    //     assert_eq!(parsed_tag[0].0, "Name");
-    //     assert_eq!(parsed_tag[0].1, "Search and Browse - Kiwi GraphQL Server");
-    // }
-
-    // #[test]
-    // fn build_configuration_tests(){
-    //     let config_str = include_str!("/config/config.json");
-    //     let config : CostExplorerConfig = serde_json::from_str(config_str).unwrap();
-    //     assert_eq!(config.region_dimension, "us-west-2");
-    // }
-}
