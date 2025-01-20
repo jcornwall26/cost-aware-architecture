@@ -61,7 +61,7 @@ mod tests {
 
     #[test]
     fn config_manager_query_by_lambda_name_tests() {
-        let lambda_name = "tf-ecom-web-app-prodb-shop-service";
+        let lambda_name = "test-lambda";
         let manager = ReportConfigManager::new();
 
         let config = manager.get_config(lambda_name).unwrap();
@@ -70,19 +70,15 @@ mod tests {
         assert_eq!(config.region, "us-west-2");
         assert_eq!(
             config.cost_allocation_tags[0].key,
-            "lll:business:application-name",
+            "application",
         );
         assert_eq!(
             config.cost_allocation_tags[0].values[0],
             "web-app",
         );
         assert_eq!(
-            config.cost_allocation_tags[0].values[1],
-            "ecom-web-app",
-        );
-        assert_eq!(
             config.report_query_role_arn,
-            "arn:aws:iam::048430863637:role/lll-cost-aware-arch-reporter"
+            "arn:aws:iam::111111:role/cost-aware-arch-reporter"
         );
     }
 
